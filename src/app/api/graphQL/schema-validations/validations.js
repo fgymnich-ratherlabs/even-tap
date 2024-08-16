@@ -1,3 +1,4 @@
+//esto es un borrador para tratar de implementar validaciones de entrada
 const Joi = require('joi');
 
 export const eventValidationSchema = Joi.object({
