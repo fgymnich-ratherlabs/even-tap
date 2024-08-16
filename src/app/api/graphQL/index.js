@@ -10,21 +10,12 @@ import cors from "cors"; */
 
 //Esquema de resolvers
 const schema = require('./schema');
-cd
+
 //GraphQL Resolvers
 const root = require('./resolvers/resolvers');
 
 
-const authenticate = async (context) => {
-  const authHeader = context.headers.authorization;
-  if (!authHeader) throw new Error('Not authenticated');
-  const token = authHeader.replace('Bearer ', '');
-  try {
-    return jwt.verify(token, 'SECRET_KEY');
-  } catch (e) {
-    throw new Error('Invalid token');
-  }
-};
+
 
 //todo esto vvvvvvv hay q cambiarlo por que corra en vercel
 const app = express();

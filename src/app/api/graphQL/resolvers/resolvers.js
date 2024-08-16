@@ -3,6 +3,17 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const prisma = new PrismaClient();
 
+const authenticate = async (context) => {
+    const authHeader = context.headers.authorization;
+    if (!authHeader) throw new Error('Not authenticated');
+    const token = authHeader.replace('Bearer ', '');
+    try {
+      return jwt.verify(token, 'SECRET_KEY');
+    } catch (e) {
+      throw new Error('Invalid token');
+    }
+  };
+
 const root = {
     users: async () => {
       return await prisma.user.findMany();
