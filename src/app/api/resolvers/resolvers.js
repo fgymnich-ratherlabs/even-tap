@@ -24,8 +24,22 @@ const root = {
     event: async ({ id }) => {
       return await prisma.event.findUnique({ where: { id: parseInt(id) }, include: { organizer: true } });
     },
+
     signup: async ({ name, email, password }) => {
+      console.log('kk');
       const hashedPassword = await bcrypt.hash(password, 10);
+      console.log('Signup called with:', { name, email, password });
+
+      // 1. Validar si los campos existen y son válidos
+      if (!name || !email || !password) {
+        throw new Error('Todos los campos son obligatorios.');
+      }
+
+      // 2. Verificar si el usuario ya existe en la base de datos (ejemplo utilizando Prisma)
+      const existingUser = await prisma.user.findUnique({ where: { email } });
+      if (existingUser) {
+        throw new Error('Ya existe un usuario con ese email.');
+      }
   
       try{
         const user = await prisma.user.create({
@@ -35,7 +49,9 @@ const root = {
             password: hashedPassword,
           },
         });
-        return jwt.sign({ userId: user.id, role: user.role }, 'SECRET_KEY');
+        console.log("user created w prisma ", user);
+        const token = jwt.sign({ userId: user.id, role: user.role }, 'SECRET_KEY');
+        return token;
       } catch (error) {
         console.error('Error al crear el usuario:', error);
       }
