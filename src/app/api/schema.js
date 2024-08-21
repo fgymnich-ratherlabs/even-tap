@@ -33,7 +33,7 @@ const schema = buildSchema(`
   
     type Mutation {
       signup(name: String!, email: String!, password: String!): String
-      login(email: String!, password: String!): String
+      signin(email: String!, password: String!): String
       createEvent(name: String!, description: String!, location: String!, date: String!, maxCapacity: Int!): Event
       applyToEvent(eventId: ID!): Application
       manageApplication(applicationId: ID!, status: String!): Application

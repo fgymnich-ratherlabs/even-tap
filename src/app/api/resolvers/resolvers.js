@@ -56,7 +56,7 @@ const root = {
         console.error('Error al crear el usuario:', error);
       }
     },
-    login: async ({ email, password }) => {
+    signin: async ({ email, password }) => {
       const user = await prisma.user.findUnique({ where: { email } });
       if (!user) throw new Error('User not found');
       const valid = await bcrypt.compare(password, user.password);
