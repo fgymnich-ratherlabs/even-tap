@@ -26,9 +26,6 @@ export default function SignupPage() {
       try {
         const response = await signup({ variables: { name, email, password} });
         console.log('User signed up successfully:', response);
-
-        localStorage.setItem('auth-token', response.data.signup);
-
         router.push('/signin'); // Redirigir a la página de inicio de sesión después del registro
       } catch (err) {
         console.error('Error during sign up:', err);
