@@ -26,7 +26,6 @@ const root = {
     },
 
     signup: async ({ name, email, password }) => {
-      console.log('kk');
       const hashedPassword = await bcrypt.hash(password, 10);
       console.log('Signup called with:', { name, email, password });
 
@@ -50,13 +49,13 @@ const root = {
           },
         });
         console.log("user created w prisma ", user);
-        const token = jwt.sign({ userId: user.id, role: user.role }, 'SECRET_KEY');
-        return token;
+        return user.name;
       } catch (error) {
         console.error('Error al crear el usuario:', error);
       }
     },
-    login: async ({ email, password }) => {
+    signin: async ({ email, password }) => {
+      console.log('Signin called with:', { email, password });
       const user = await prisma.user.findUnique({ where: { email } });
       if (!user) throw new Error('User not found');
       const valid = await bcrypt.compare(password, user.password);
@@ -65,7 +64,7 @@ const root = {
     },
     createEvent: async ({ name, description, location, date, maxCapacity }, context) => {
       const user = await authenticate(context);
-      if (user.role !== 'ORGANIZER') throw new Error('Not authorized');
+      //if (user.role !== 'ORGANIZER') throw new Error('Not authorized');
       return await prisma.event.create({
         data: {
           name,
@@ -74,6 +73,9 @@ const root = {
           date: new Date(date),
           maxCapacity,
           organizer: { connect: { id: user.userId } },
+        },
+        include: {
+          organizer: true, // Para incluir la información del organizador en la respuesta
         },
       });
     },
