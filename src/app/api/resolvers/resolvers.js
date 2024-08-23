@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
+const { error } = require('console');
 const jwt = require('jsonwebtoken');
 const prisma = new PrismaClient();
 
@@ -22,10 +23,26 @@ const root = {
       return await prisma.event.findMany({ include: { organizer: true } });
     },
     event: async ({ id }) => {
-      return await prisma.event.findUnique({ where: { id: parseInt(id) }, include: { organizer: true } });
+      if (!id){
+        throw new Error('Id necesario.');
+      }
+      return await prisma.event.findUnique({ where: { id: parseInt(id) }, include: { organizer: true },});
     },
+
     signup: async ({ name, email, password }) => {
       const hashedPassword = await bcrypt.hash(password, 10);
+      console.log('Signup called with:', { name, email, password });
+
+      // 1. Validar si los campos existen y son válidos
+      if (!name || !email || !password) {
+        throw new Error('Todos los campos son obligatorios.');
+      }
+
+      // 2. Verificar si el usuario ya existe en la base de datos (ejemplo utilizando Prisma)
+      const existingUser = await prisma.user.findUnique({ where: { email } });
+      if (existingUser) {
+        throw new Error('Ya existe un usuario con ese email.');
+      }
   
       try{
         const user = await prisma.user.create({
@@ -35,29 +52,34 @@ const root = {
             password: hashedPassword,
           },
         });
-        return jwt.sign({ userId: user.id, role: user.role }, 'SECRET_KEY');
+        console.log("user created w prisma ", user);
+        return user.name;
       } catch (error) {
         console.error('Error al crear el usuario:', error);
       }
     },
-    login: async ({ email, password }) => {
+    signin: async ({ email, password }) => {
+      console.log('Signin called with:', { email, password });
       const user = await prisma.user.findUnique({ where: { email } });
       if (!user) throw new Error('User not found');
       const valid = await bcrypt.compare(password, user.password);
       if (!valid) throw new Error('Invalid password');
-      return jwt.sign({ userId: user.id, role: user.role }, 'SECRET_KEY');
+      return jwt.sign({ userId: user.id, role: user.role }, 'SECRET_KEY');  
     },
     createEvent: async ({ name, description, location, date, maxCapacity }, context) => {
       const user = await authenticate(context);
-      if (user.role !== 'ORGANIZER') throw new Error('Not authorized');
+      //if (user.role !== 'ORGANIZER') throw new Error('Not authorized');
       return await prisma.event.create({
         data: {
           name,
           description,
           location,
-          date: new Date(date),
+          date: new Date(date), //borrar?
           maxCapacity,
           organizer: { connect: { id: user.userId } },
+        },
+        include: {
+          organizer: true, // Para incluir la información del organizador en la respuesta
         },
       });
     },
