@@ -4,21 +4,22 @@ import { gql, useQuery } from '@apollo/client';
 import Link from 'next/link';
 //import { format } from 'date-fns';
 
-const APPLY_TO_EVENT_MUTATION = gql`
-  mutation ApplyToEvent($eventId: ID!) {
-    applyToEvent(eventId: $eventId) {
+const GET_EVENT_QUERY = gql`
+  query GetEvent($id: ID!) {
+    event(id: $id) {
       id
-      user {
-        id
-        name
-      }
-      event {
-        id
+      name
+      description
+      location
+      date
+      maxCapacity
+      organizer {
         name
       }
     }
   }
 `;
+
 
 
 
