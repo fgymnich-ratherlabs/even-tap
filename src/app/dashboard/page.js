@@ -60,12 +60,13 @@ export default function Dashboard() {
                       <p className="text-gray-900 font-medium">{event.name}</p>
                       <p className="text-gray-500">{event.description}</p>
                       <p className="text-gray-500">{event.location}</p>
-                      <p className="text-gray-500">{new Date(event.date).toLocaleDateString()}</p>
+                      <p className="text-gray-500">{new Date(parseInt(event.date)).toLocaleDateString()}
+                      </p>
                     </div>
                   </div>
                   <div className="ml-4 flex-shrink-0">
                     <Link href={`/events/${event.id}`}>
-                      <span className="text-indigo-600 hover:text-indigo-500">Ver detalles</span>
+                      <span className="text-indigo-600 hover:text-indigo-500">Ver detalles o Aplicar</span>
                     </Link>
                   </div>
                 </li>
@@ -76,7 +77,7 @@ export default function Dashboard() {
         <div>
           <Link href="/log-out">
             <span className="mt-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
-              Log Out TODO!!
+              Log Out 
             </span>
           </Link> 
           </div>

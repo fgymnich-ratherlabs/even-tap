@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
+const { error } = require('console');
 const jwt = require('jsonwebtoken');
 const prisma = new PrismaClient();
 
@@ -22,7 +23,10 @@ const root = {
       return await prisma.event.findMany({ include: { organizer: true } });
     },
     event: async ({ id }) => {
-      return await prisma.event.findUnique({ where: { id: parseInt(id) }, include: { organizer: true } });
+      if (!id){
+        throw new Error('Id necesario.');
+      }
+      return await prisma.event.findUnique({ where: { id: parseInt(id) }, include: { organizer: true },});
     },
 
     signup: async ({ name, email, password }) => {
@@ -60,7 +64,7 @@ const root = {
       if (!user) throw new Error('User not found');
       const valid = await bcrypt.compare(password, user.password);
       if (!valid) throw new Error('Invalid password');
-      return jwt.sign({ userId: user.id, role: user.role }, 'SECRET_KEY');
+      return jwt.sign({ userId: user.id, role: user.role }, 'SECRET_KEY');  
     },
     createEvent: async ({ name, description, location, date, maxCapacity }, context) => {
       const user = await authenticate(context);
@@ -70,7 +74,7 @@ const root = {
           name,
           description,
           location,
-          date: new Date(date),
+          date: new Date(date), //borrar?
           maxCapacity,
           organizer: { connect: { id: user.userId } },
         },
