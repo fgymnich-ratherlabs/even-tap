@@ -1,10 +1,9 @@
 "use client"
 
 import React from 'react';
-import { useMutation } from '@apollo/client';
+import { useMutation, gql } from '@apollo/client';
 import { useRouter } from 'next/navigation';
-
-import { gql } from '@apollo/client';
+import Cookies from 'js-cookie';
 
 export const SIGNIN_MUTATION = gql`
   mutation SignIn($email: String!, $password: String!) {
@@ -28,8 +27,9 @@ export default function SigninForm() {
     try {
       const response = await signin({ variables: { email, password } });
       if(response?.data?.signin){ 
-        // Almacenar el token que devuelve signin en localStorage
-        localStorage.setItem('authToken', response.data.signin);
+        // Almacenar el token que devuelve signin en localStorage o cookies
+        //localStorage.setItem('authToken', response.data.signin);
+        Cookies.set('authToken', response.data.signin, { expires: 1, secure: true, sameSite: 'Strict' });
         router.push('/dashboard'); // Redirigir al dashboard u otra página tras iniciar sesión
 
       }

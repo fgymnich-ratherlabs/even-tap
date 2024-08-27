@@ -1,5 +1,7 @@
 import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
+import Cookies from 'js-cookie';
+
 
 // Configura el enlace HTTP a tu servidor GraphQL
 const httpLink = createHttpLink({
@@ -9,7 +11,7 @@ const httpLink = createHttpLink({
 // Configura el enlace de autenticación (opcional)
 const authLink = setContext((_, { headers }) => {
   // Obtén el token de autenticación desde localStorage o cookies
-  const token = localStorage.getItem('auth-token');
+  const token = Cookies.get('authToken');//localStorage.getItem('auth-token')
   return {
     headers: {
       ...headers,

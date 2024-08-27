@@ -3,13 +3,16 @@ const bcrypt = require('bcryptjs');
 const { error } = require('console');
 const jwt = require('jsonwebtoken');
 const prisma = new PrismaClient();
+require('dotenv').config();
 
 const authenticate = async (context) => {
     const authHeader = context.headers.authorization;
     if (!authHeader) throw new Error('Not authenticated');
     const token = authHeader.replace('Bearer ', '');
     try {
-      return jwt.verify(token, 'SECRET_KEY');
+      decripted = jwt.verify(token, process.env.SECRET_KEY);
+      //agregar expiry
+      return decripted; //devuelve el token desencriptado
     } catch (e) {
       throw new Error('Invalid token');
     }
@@ -64,7 +67,7 @@ const root = {
       if (!user) throw new Error('User not found');
       const valid = await bcrypt.compare(password, user.password);
       if (!valid) throw new Error('Invalid password');
-      return jwt.sign({ userId: user.id, role: user.role }, 'SECRET_KEY');  
+      return jwt.sign({ userId: user.id, role: user.role,  }, process.env.SECRET_KEY, { expiresIn: '1h' });  
     },
     createEvent: async ({ name, description, location, date, maxCapacity }, context) => {
       const user = await authenticate(context);
@@ -85,9 +88,10 @@ const root = {
     },
     applyToEvent: async ({ eventId }, context) => {
       const user = await authenticate(context);
+      console.log("application called with userId, eventId: ", user.userId,parseInt(eventId));
       return await prisma.application.create({
         data: {
-          user: { connect: { id: user.userId } },
+          user: { connect: { id: parseInt(user.userId) } },
           event: { connect: { id: parseInt(eventId) } },
         },
       });

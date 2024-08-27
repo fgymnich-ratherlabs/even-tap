@@ -17,7 +17,6 @@ const schema = require('./schema');
 //GraphQL Resolvers
 const root = require('./resolvers/resolvers');
 
-//todo esto vvvvvvv hay q cambiarlo por que corra en vercel
 const app = express();
 //Express middleware
 app.use(express.json());
@@ -31,7 +30,7 @@ app.use(cors({
 }));
 
 //graphQLHTTP middleware
-app.use('/graphql', graphqlHTTP((req) => ({
+app.use('/graphql', authenticateMiddleware, graphqlHTTP((req) => ({
   schema,
   rootValue: root,
   context: req,
