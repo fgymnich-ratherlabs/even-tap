@@ -9,7 +9,7 @@ const authenticate = (req, res, next) => {
     const operationName = req.body.operationName;
 
     // Lista de operaciones que no requieren autenticación
-    const publicOperations = ['signup', 'signin'];
+    const publicOperations = ['SignUp', 'SignIn'];
 
     // Si la operación es pública, permite el acceso sin autenticación
     if (publicOperations.includes(operationName)) {
@@ -29,7 +29,7 @@ const authenticate = (req, res, next) => {
     req.user = decodedToken; // Almacenar los datos del usuario decodificados en la solicitud
     next(); // Continuar al siguiente middleware o controlador
   } catch (error) {
-    return res.status(403).json({ message: 'Invalid or expired token' });
+    return res.status(403).json({ message: 'Invalid or expired token', error: error });
   }
 };
 

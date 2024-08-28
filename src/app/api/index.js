@@ -2,6 +2,10 @@ const express = require('express');
 // const tasksRouter = require('./routes/routes');
 const { graphqlHTTP } = require('express-graphql');
 const jwt = require('jsonwebtoken');
+const authenticateMiddleware = require('./middleware/authenticate');
+require('dotenv').config();
+
+
 //import { NextResponse } from 'next/server';
 //const valid = require('schema-validations/validations');//TODO
 /* import { ApolloServer, gql } from "apollo-server-express";

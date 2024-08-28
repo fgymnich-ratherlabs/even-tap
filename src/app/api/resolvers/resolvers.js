@@ -4,6 +4,8 @@ const { error } = require('console');
 const jwt = require('jsonwebtoken');
 const prisma = new PrismaClient();
 require('dotenv').config();
+const { UserInputError } = require('apollo-server-express'); 
+
 
 const authenticate = async (context) => {
     const authHeader = context.headers.authorization;
@@ -55,47 +57,84 @@ const root = {
             password: hashedPassword,
           },
         });
-        console.log("user created w prisma ", user);
         return user.name;
       } catch (error) {
         console.error('Error al crear el usuario:', error);
       }
     },
     signin: async ({ email, password }) => {
-      console.log('Signin called with:', { email, password });
-      const user = await prisma.user.findUnique({ where: { email } });
-      if (!user) throw new Error('User not found');
-      const valid = await bcrypt.compare(password, user.password);
-      if (!valid) throw new Error('Invalid password');
-      return jwt.sign({ userId: user.id, role: user.role,  }, process.env.SECRET_KEY, { expiresIn: '1h' });  
+      try{
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (!user) throw new Error('User not found');
+        const valid = await bcrypt.compare(password, user.password);
+        if (!valid) throw new Error('Invalid password');
+        return jwt.sign({ userId: user.id, role: user.role,  }, process.env.SECRET_KEY, { expiresIn: '1h' });
+      }catch(error) {
+        console.error('Usuario o Clave incorrectas');
+      }  
     },
     createEvent: async ({ name, description, location, date, maxCapacity }, context) => {
       const user = await authenticate(context);
       //if (user.role !== 'ORGANIZER') throw new Error('Not authorized');
-      return await prisma.event.create({
-        data: {
-          name,
-          description,
-          location,
-          date: new Date(date), //borrar?
-          maxCapacity,
-          organizer: { connect: { id: user.userId } },
-        },
-        include: {
-          organizer: true, // Para incluir la información del organizador en la respuesta
-        },
-      });
+
+      try { 
+          const event = await prisma.event.create({
+            data: {
+              name,
+              description,
+              location,
+              date: new Date(date), //borrar?
+              maxCapacity,
+              organizer: { connect: { id: user.userId } },
+            },
+            include: {
+              organizer: true, // Para incluir la información del organizador en la respuesta
+            },
+          });
+          return event;
+      }catch(error){
+        console.error('Error al crear el evento:', error);
+      }
     },
+
     applyToEvent: async ({ eventId }, context) => {
       const user = await authenticate(context);
-      console.log("application called with userId, eventId: ", user.userId,parseInt(eventId));
-      return await prisma.application.create({
-        data: {
-          user: { connect: { id: parseInt(user.userId) } },
-          event: { connect: { id: parseInt(eventId) } },
+      const userId = parseInt(user.userId);
+      const parsedEventId = parseInt(eventId);
+
+      // Verificar si ya existe una aplicación para el usuario y el evento
+      const existingApplication = await prisma.application.findUnique({
+        where: {
+          userId_eventId: {
+            userId: userId,
+            eventId: parsedEventId,
+          },
         },
       });
+
+      if (existingApplication) {
+        throw new UserInputError('Ya has aplicado a este evento.', {
+          invalidArgs: { eventId },
+        });
+      }
+
+      try{
+        const application = await prisma.application.create({
+          data: {
+            user: { connect: { id: userId } },
+            event: { connect: { id: parsedEventId } },
+          },
+          include: {
+            user: true,
+          }
+        });
+
+        return application;
+      }catch(error){
+        console.error('Error al aplicar al evento:', error); 
+      }
     },
+
     manageApplication: async ({ applicationId, status }, context) => {
       const user = await authenticate(context);
       const application = await prisma.application.findUnique({

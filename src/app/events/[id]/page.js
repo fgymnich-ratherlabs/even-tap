@@ -43,20 +43,16 @@ export default function EventPage({params}) {
     variables: { id },
   });
 
-  const [applyToEvent, { loadingApplication, errorApplication, dataApplication }] = useMutation(APPLY_TO_EVENT_MUTATION);
+  const [applyToEvent, {data: dataApplication,loading: loadingApplication,error: errorApplication }] = useMutation(
+                                                                                      APPLY_TO_EVENT_MUTATION
+                                                                                    ); 
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error.message}</p>;
 
-
-  const handleApply = async () => {
-    try {
-      await applyToEvent({ variables: { eventId: params.id } });
-      alert('¡Aplicación exitosa!');
-    } catch (e) {
-      console.error('Error al aplicar al evento:', e);
-      alert('Hubo un problema al aplicar al evento.');
-    }
+  const handleApply = async (e) => {
+    e.preventDefault();
+    applyToEvent({ variables: { eventId: params.id, } });
   };
 
   const event = data?.event;
@@ -87,15 +83,16 @@ export default function EventPage({params}) {
             <p className="text-gray-900 font-medium mt-4">Organizador</p>
             <p className="text-gray-500">{event.organizer.name}</p>
           </div>
-            <button
-                onClick={handleApply}
-                disabled={loading||dataApplication}
-                className="mt-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-              >
-                {loadingApplication ? 'Aplicando...' : 'Aplicar al Evento'}
+            <div>
+              <button
+                  onClick={handleApply}
+                  disabled={loadingApplication||dataApplication||errorApplication}
+                  className="mt-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:pointer-events-none disabled:opacity-50 "
+                >
+                  {loadingApplication ? 'Aplicando...' : 'Aplicar al Evento'}
               </button>
-              {error && <p className="mt-2 text-red-500">Error: {errorApplication.message}</p>}
-              
+              {errorApplication && <p className="text-red-500">Error: {errorApplication.message}</p>}
+            </div>
         </div>
         <div className="mt-6">
           <Link href="/dashboard">
