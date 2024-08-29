@@ -6,6 +6,8 @@ const schema = buildSchema(`
       name: String!
       email: String!
       role: String!
+      events: [Event!]!          
+      applications: [Application!]!  
     }
   
     type Event {
@@ -16,6 +18,8 @@ const schema = buildSchema(`
       date: String!
       maxCapacity: Int!
       organizer: User!
+      applications: [Application!]!
+      organizerId: Int!
     }
   
     type Application {
@@ -27,6 +31,7 @@ const schema = buildSchema(`
   
     type Query {
       users: [User!]!
+      user: User
       events: [Event!]!
       event(id: ID!): Event
     }

@@ -21,9 +21,42 @@ const authenticate = async (context) => {
   };
 
 const root = {
+    //potencialmente quitarlo por riesgo de seguridad  
     users: async () => {
       return await prisma.user.findMany();
     },
+
+    //get current user
+    user: async (args, context) => {
+      try {
+        const Id = await authenticate(context);
+        const userId = parseInt(Id.userId);
+
+        // Buscar al usuario por su ID
+        const user = await prisma.user.findUnique({
+          where: { id: userId },
+          include: {
+            events: true,  // Incluye los eventos creados por el usuario
+            applications: {  // Incluye las aplicaciones realizadas por el usuario
+              include: {
+                event: true, // Incluye el evento al que se aplicó
+              },
+            },
+          },
+        });
+
+        if (!user) {
+          throw new Error('Usuario no encontrado');
+        }
+
+        return user;
+
+      } catch (error) {
+        console.error("Error fetching user:", error);
+        throw new Error('No se pudo obtener la información del usuario.');
+      }
+    },
+
     events: async () => {
       return await prisma.event.findMany({ include: { organizer: true } });
     },
@@ -130,7 +163,8 @@ const root = {
         });
 
         return application;
-      }catch(error){
+
+      } catch(error){
         console.error('Error al aplicar al evento:', error); 
       }
     },
