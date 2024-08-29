@@ -1,6 +1,6 @@
 "use client"
 
-import { gql, useQuery } from '@apollo/client';
+import { gql, useQuery, useMutation } from '@apollo/client';
 import Link from 'next/link';
 //import { format } from 'date-fns';
 
@@ -20,7 +20,21 @@ const GET_EVENT_QUERY = gql`
   }
 `;
 
-
+const APPLY_TO_EVENT_MUTATION = gql`
+  mutation ApplyToEvent($eventId: ID!) {
+    applyToEvent(eventId: $eventId) {
+      id
+      user {
+        id
+        name
+      }
+      event {
+        id
+        name
+      }
+    }
+  }
+`;
 
 
 export default function EventPage({params}) {
@@ -29,8 +43,17 @@ export default function EventPage({params}) {
     variables: { id },
   });
 
+  const [applyToEvent, {data: dataApplication,loading: loadingApplication,error: errorApplication }] = useMutation(
+                                                                                      APPLY_TO_EVENT_MUTATION
+                                                                                    ); 
+
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error.message}</p>;
+
+  const handleApply = async (e) => {
+    e.preventDefault();
+    applyToEvent({ variables: { eventId: params.id, } });
+  };
 
   const event = data?.event;
 
@@ -60,14 +83,16 @@ export default function EventPage({params}) {
             <p className="text-gray-900 font-medium mt-4">Organizador</p>
             <p className="text-gray-500">{event.organizer.name}</p>
           </div>
-          <button
-          type="button"
-          className="mt-4 w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-700"
-          //  onClick={}
-          disabled={loading}
-        >
-          {loading ? 'Aplicando...' : 'Aplicar'}
-        </button>
+            <div>
+              <button
+                  onClick={handleApply}
+                  disabled={loadingApplication||dataApplication||errorApplication}
+                  className="mt-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:pointer-events-none disabled:opacity-50 "
+                >
+                  {loadingApplication ? 'Aplicando...' : 'Aplicar al Evento'}
+              </button>
+              {errorApplication && <p className="text-red-500">Error: {errorApplication.message}</p>}
+            </div>
         </div>
         <div className="mt-6">
           <Link href="/dashboard">

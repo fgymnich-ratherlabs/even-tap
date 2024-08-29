@@ -14,6 +14,7 @@ const CURRENT_USER_QUERY = gql`
 `;
 
 export default function ProfilePage() {
+  
   const { loading, error, data } = useQuery(CURRENT_USER_QUERY);
 
   if (loading) return <p>Loading...</p>;

@@ -32,6 +32,9 @@ export default function Dashboard() {
   }, [data]);
 
   if (loading) return <p className="text-center text-gray-500">Cargando eventos...</p>;
+/*   if (error && error.networkError && error.networkError.statusCode !== 401) {
+    return <ErrorMessage message="Error al cargar eventos:" details={error.message} />;
+  } */
   if (error) return <p className="text-center text-red-500">Error al cargar eventos</p>;
 
   return (
