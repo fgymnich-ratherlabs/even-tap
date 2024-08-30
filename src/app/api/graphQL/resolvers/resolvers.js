@@ -2,22 +2,60 @@ const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const prisma = new PrismaClient();
+require('dotenv').config();
+const { UserInputError } = require('apollo-server-express'); 
+
 
 const authenticate = async (context) => {
     const authHeader = context.headers.authorization;
     if (!authHeader) throw new Error('Not authenticated');
     const token = authHeader.replace('Bearer ', '');
     try {
-      return jwt.verify(token, 'SECRET_KEY');
+      decripted = jwt.verify(token, process.env.SECRET_KEY);
+      //agregar expiry
+      return decripted; //devuelve el token desencriptado
     } catch (e) {
       throw new Error('Invalid token');
     }
   };
 
 const root = {
+    //potencialmente quitarlo por riesgo de seguridad  
     users: async () => {
       return await prisma.user.findMany();
     },
+
+    //get current user
+    user: async (args, context) => {
+      try {
+        const Id = await authenticate(context);
+        const userId = parseInt(Id.userId);
+
+        // Buscar al usuario por su ID
+        const user = await prisma.user.findUnique({
+          where: { id: userId },
+          include: {
+            events: true,  // Incluye los eventos creados por el usuario
+            applications: {  // Incluye las aplicaciones realizadas por el usuario
+              include: {
+                event: true, // Incluye el evento al que se aplicó
+              },
+            },
+          },
+        });
+
+        if (!user) {
+          throw new Error('Usuario no encontrado');
+        }
+
+        return user;
+
+      } catch (error) {
+        console.error("Error fetching user:", error);
+        throw new Error('No se pudo obtener la información del usuario.');
+      }
+    },
+
     events: async () => {
       return await prisma.event.findMany({ include: { organizer: true } });
     },
@@ -35,41 +73,85 @@ const root = {
             password: hashedPassword,
           },
         });
-        return jwt.sign({ userId: user.id, role: user.role }, 'SECRET_KEY');
+        return user.name;
       } catch (error) {
         console.error('Error al crear el usuario:', error);
       }
     },
-    login: async ({ email, password }) => {
-      const user = await prisma.user.findUnique({ where: { email } });
-      if (!user) throw new Error('User not found');
-      const valid = await bcrypt.compare(password, user.password);
-      if (!valid) throw new Error('Invalid password');
-      return jwt.sign({ userId: user.id, role: user.role }, 'SECRET_KEY');
+    signin: async ({ email, password }) => {
+      try{
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (!user) throw new Error('User not found');
+        const valid = await bcrypt.compare(password, user.password);
+        if (!valid) throw new Error('Invalid password');
+        return jwt.sign({ userId: user.id, role: user.role,  }, process.env.SECRET_KEY, { expiresIn: '1h' });
+      }catch(error) {
+        console.error('Usuario o Clave incorrectas');
+      }  
     },
     createEvent: async ({ name, description, location, date, maxCapacity }, context) => {
       const user = await authenticate(context);
-      if (user.role !== 'ORGANIZER') throw new Error('Not authorized');
-      return await prisma.event.create({
-        data: {
-          name,
-          description,
-          location,
-          date: new Date(date),
-          maxCapacity,
-          organizer: { connect: { id: user.userId } },
-        },
-      });
+      //if (user.role !== 'ORGANIZER') throw new Error('Not authorized');
+
+      try { 
+          const event = await prisma.event.create({
+            data: {
+              name,
+              description,
+              location,
+              date: new Date(date), //borrar?
+              maxCapacity,
+              organizer: { connect: { id: user.userId } },
+            },
+            include: {
+              organizer: true, // Para incluir la información del organizador en la respuesta
+            },
+          });
+          return event;
+      }catch(error){
+        console.error('Error al crear el evento:', error);
+      }
     },
+
     applyToEvent: async ({ eventId }, context) => {
       const user = await authenticate(context);
-      return await prisma.application.create({
-        data: {
-          user: { connect: { id: user.userId } },
-          event: { connect: { id: parseInt(eventId) } },
+      const userId = parseInt(user.userId);
+      const parsedEventId = parseInt(eventId);
+
+      // Verificar si ya existe una aplicación para el usuario y el evento
+      const existingApplication = await prisma.application.findUnique({
+        where: {
+          userId_eventId: {
+            userId: userId,
+            eventId: parsedEventId,
+          },
         },
       });
+
+      if (existingApplication) {
+        throw new UserInputError('Ya has aplicado a este evento.', {
+          invalidArgs: { eventId },
+        });
+      }
+
+      try{
+        const application = await prisma.application.create({
+          data: {
+            user: { connect: { id: userId } },
+            event: { connect: { id: parsedEventId } },
+          },
+          include: {
+            user: true,
+          }
+        });
+
+        return application;
+
+      } catch(error){
+        console.error('Error al aplicar al evento:', error); 
+      }
     },
+
     manageApplication: async ({ applicationId, status }, context) => {
       const user = await authenticate(context);
       const application = await prisma.application.findUnique({

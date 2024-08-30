@@ -1,6 +1,10 @@
 const express = require('express');
 const { graphqlHTTP } = require('express-graphql');
 const jwt = require('jsonwebtoken');
+const authenticateMiddleware = require('./middleware/authenticate');
+require('dotenv').config();
+
+
 //import { NextResponse } from 'next/server';
 //const valid = require('schema-validations/validations');//TODO
 /* import { ApolloServer, gql } from "apollo-server-express";
@@ -14,16 +18,12 @@ const schema = require('./schema');
 //GraphQL Resolvers
 const root = require('./resolvers/resolvers');
 
-
-
-
-//todo esto vvvvvvv hay q cambiarlo por que corra en vercel
 const app = express();
 //Express middleware
 app.use(express.json());
 
 //graphQLHTTP middleware
-app.use('/graphql', graphqlHTTP((req) => ({
+app.use('/graphql', authenticateMiddleware, graphqlHTTP((req) => ({
   schema,
   rootValue: root,
   context: req,
