@@ -27,7 +27,7 @@ export default function CreateEvent() {
   const router = useRouter();
   const [formData, setFormData] = React.useState(new FormData());
 
-  const [createEvent, { loading, error }] = useMutation(CREATE_EVENT_MUTATION, {
+  const [createEvent, { data, loading, error }] = useMutation(CREATE_EVENT_MUTATION, {
     onCompleted: (data) => {
       console.log('Event created:', data.createEvent);
       router.refresh();
@@ -137,6 +137,7 @@ export default function CreateEvent() {
           {loading ? 'Creating...' : 'Create Event'}
         </button>
         {error && <p className="mt-2 text-red-500">Error: {error.message}</p>}
+        {data && <p className="mt-2 text-green-500">Evento creado exitosamente</p>}
       </form>
     </div>
   );

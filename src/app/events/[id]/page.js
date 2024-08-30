@@ -91,7 +91,9 @@ export default function EventPage({params}) {
                 >
                   {loadingApplication ? 'Aplicando...' : 'Aplicar al Evento'}
               </button>
-              {errorApplication && <p className="text-red-500">Error: {errorApplication.message}</p>}
+              {errorApplication && <p className="text-red-500 font-medium mt-1">Error: {errorApplication.message}</p>}
+              {dataApplication && <p className="text-green-500 font-medium mt-1">¡Solicitud de Aplicación Exitosa!
+                <br />A la brevedad se tendrá la confirmación de aceptación. Puede volver a Inicio.  </p>}
             </div>
         </div>
         <div className="mt-6">

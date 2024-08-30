@@ -118,6 +118,23 @@ const root = {
       const userId = parseInt(user.userId);
       const parsedEventId = parseInt(eventId);
 
+      const event = await prisma.event.findUnique({
+        where: { id: parseInt(eventId) },
+        include: {
+          applications: {
+            where: { status: 'ACCEPTED' }
+          }
+        }
+      });
+
+      if (!event) {
+        throw new Error('El evento no existe.');
+      }
+
+      if (event.applications.length >= event.maxCapacity) {
+        throw new Error('El evento ha alcanzado su capacidad máxima.');
+      }
+
       // Verificar si ya existe una aplicación para el usuario y el evento
       const existingApplication = await prisma.application.findUnique({
         where: {
@@ -142,6 +159,7 @@ const root = {
           },
           include: {
             user: true,
+            event: true,
           }
         });
 
@@ -152,16 +170,28 @@ const root = {
       }
     },
 
-    manageApplication: async ({ applicationId, status }, context) => {
+    manageApplication: async ({ applicationId, status, version }, context) => {
       const user = await authenticate(context);
       const application = await prisma.application.findUnique({
         where: { id: parseInt(applicationId) },
         include: { event: true },
       });
+      if (!application) {
+        throw new Error('La aplicación no existe.');
+      }
+      // Verificar si el usuario es el organizador del evento
       if (application.event.organizerId !== user.userId) throw new Error('Not authorized');
+      // Verificar que la versión del cliente coincida con la versión de la base de datos
+      if (application.version !== version) {
+        throw new Error('La aplicación ha sido modificada por otro usuario. Actualiza la página e inténtalo de nuevo.');
+      }
+
       return await prisma.application.update({
         where: { id: parseInt(applicationId) },
-        data: { status },
+        data: { 
+          status,
+          version: application.version + 1 // Incrementar la versión para el OCC
+         },
       });
     },
   };
