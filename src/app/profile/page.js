@@ -18,6 +18,7 @@ const CURRENT_USER_APPLIED_EVENTS_QUERY = gql`
       }
       applications {
         id
+        status
         event {
           id
           name
@@ -61,10 +62,14 @@ export default function ProfilePage() {
                       <p className="text-gray-900 font-medium">{event.name}</p>
                       <p className="text-gray-500">{new Date(parseInt(event.date)).toLocaleDateString()}</p>
                       <p className="text-gray-500">{event.location}</p>
+                      <p className="text-gray-500">Aplicaciones: / {event.maxCapacity}</p>
                     </div>
                   </div>
                   <div className="ml-4 flex-shrink-0">
                     <a href={`/events/${event.id}`} className="text-indigo-600 hover:text-indigo-500">Ver detalles</a>
+                  </div>
+                  <div>
+                    <a href={`/profile/manage/${event.id}`} className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">Gestionar aplicaciones</a>
                   </div>
                 </li>
               ))}
@@ -85,6 +90,7 @@ export default function ProfilePage() {
                       <p className="text-gray-900 font-medium">{application.event.name}</p>
                       <p className="text-gray-500">{new Date(parseInt(application.event.date)).toLocaleDateString()}</p>
                       <p className="text-gray-500">{application.event.location}</p>
+                      <p className="text-gray-500">Status: {application.status}</p>
                     </div>
                   </div>
                   <div className="ml-4 flex-shrink-0">

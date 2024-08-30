@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, gql } from '@apollo/client';
 import Link from 'next/link';
+import Cookies from 'js-cookie';
+
 
 const EVENTS_QUERY = gql`
   query GetEvents {
@@ -35,7 +37,7 @@ export default function Dashboard() {
 /*   if (error && error.networkError && error.networkError.statusCode !== 401) {
     return <ErrorMessage message="Error al cargar eventos:" details={error.message} />;
   } */
-  if (error) return <p className="text-center text-red-500">Error al cargar eventos</p>;
+  if (error) return <p className="text-center text-red-500">Error {error.message}</p>;
 
   return (
     <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
@@ -49,7 +51,12 @@ export default function Dashboard() {
               Crear Evento
             </span>
           </Link>
-          </div>
+          <Link href="/profile">
+            <span className="mt-6 ml-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+              Mi Perfil
+            </span>
+          </Link>
+        </div>
         <div className="mt-6 bg-white shadow overflow-hidden sm:rounded-lg">
           <div className="px-4 py-5 sm:px-6">
             <h3 className="text-lg font-medium text-gray-900">Eventos Próximos</h3>
@@ -78,12 +85,17 @@ export default function Dashboard() {
           </div>
         </div>
         <div>
-          <Link href="/log-out">
-            <span className="mt-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
-              Log Out 
-            </span>
-          </Link> 
-          </div>
+          <button
+              onClick={(e) => {
+                e.preventDefault();
+                Cookies.remove('authToken'); 
+                window.location.href = '/signin';
+              }}
+              className="mt-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
+            >
+              Log Out
+          </button>
+        </div>
       </div>
     </div>
   );
