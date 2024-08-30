@@ -42,6 +42,7 @@ model Application {
   userId  Int
   event   Event  @relation(fields: [eventId], references: [id])
   eventId Int
+  version  Int    @default(0) // Campo para control de concurrencia optimista
 
   @@unique([userId, eventId]) // Un usuario solo puede aplicar una vez a un evento
 }
